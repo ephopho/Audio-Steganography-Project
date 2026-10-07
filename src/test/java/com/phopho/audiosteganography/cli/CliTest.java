@@ -4,6 +4,7 @@ import static com.phopho.audiosteganography.testing.Assert.bytesEqual;
 import static com.phopho.audiosteganography.testing.Assert.check;
 import static com.phopho.audiosteganography.testing.Assert.equal;
 
+import com.phopho.audiosteganography.Describe;
 import com.phopho.audiosteganography.testing.Test;
 import com.phopho.audiosteganography.testing.Wavs;
 import java.io.ByteArrayInputStream;
@@ -180,10 +181,10 @@ public class CliTest {
 
     @Test
     public void formatting() {
-        equal("44.1 kHz", Cli.hz(44_100));
-        equal("48 kHz", Cli.hz(48_000));
-        equal("1:05", Cli.duration(65));
-        equal("1:01:01", Cli.duration(3661));
-        equal("6 channels", Cli.channels(6));
+        equal("44.1 kHz", Describe.hz(44_100));
+        equal("48 kHz", Describe.hz(48_000));
+        equal("1:05", Describe.duration(65));
+        equal("1:01:01", Describe.duration(3661));
+        equal("6 channels", Describe.channels(6));
     }
 }

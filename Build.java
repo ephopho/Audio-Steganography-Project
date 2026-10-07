@@ -93,7 +93,7 @@ public class Build {
             fail("No Java compiler found. Run this with a JDK, not a JRE.");
         }
         List<String> options = new ArrayList<>(List.of(
-                "--release", RELEASE, "-encoding", "UTF-8", "-Xlint:all", "-Werror", "-d", out.toString()));
+                "--release", RELEASE, "-encoding", "UTF-8", "-Xlint:all,-serial", "-Werror", "-d", out.toString()));
         if (classPath != null) {
             options.addAll(List.of("-cp", classPath));
         }
@@ -247,6 +247,7 @@ public class Build {
         }
         try (Stream<Path> files = Files.walk(path)) {
             for (Path p : files.sorted(Comparator.reverseOrder()).toList()) {
+                p.toFile().setWritable(true); // jpackage marks the Windows launcher read-only
                 Files.delete(p);
             }
         }

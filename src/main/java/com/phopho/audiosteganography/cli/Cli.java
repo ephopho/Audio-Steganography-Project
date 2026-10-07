@@ -1,5 +1,6 @@
 package com.phopho.audiosteganography.cli;
 
+import com.phopho.audiosteganography.Describe;
 import com.phopho.audiosteganography.FileIO;
 import com.phopho.audiosteganography.engine.Revealed;
 import com.phopho.audiosteganography.engine.Secret;
@@ -56,6 +57,10 @@ public final class Cli {
             The password is asked for at the prompt, or read from the %s
             environment variable when set. Text secrets in 16-bit WAVs also open in the
             Blank iOS app.
+
+            On Windows, arguments can't carry characters outside the system code page
+            (they arrive as '?'). For such text pipe it in with --text - and use
+            reveal --out message.txt to get it back exactly.
             """;
 
     private final InputStream in;
@@ -142,10 +147,11 @@ public final class Cli {
         FileIO.writeAtomically(outPath, result.wav());
 
         WavFile wav = inspection.wav();
-        out.printf(Locale.ROOT, "Hid %s in %s (%.1f%% of its capacity).%n",
+        double used = 100.0 * result.bytesHidden() / inspection.capacityBytes();
+        out.printf(Locale.ROOT, "Hid %s in %s (%s of its capacity).%n",
                 secret.name() == null ? "a " + Stego.formatBytes(secret.originalSize()) + " message"
                         : secret.name() + " (" + Stego.formatBytes(secret.originalSize()) + ")",
-                outPath, 100.0 * result.bytesHidden() / inspection.capacityBytes());
+                outPath, used < 0.1 ? "under 0.1%" : String.format(Locale.ROOT, "%.1f%%", used));
         out.printf(Locale.ROOT, "%,d of %,d samples changed, each by one step.%n",
                 result.samplesChanged(), wav.sampleCount());
         if (secret.kind() == Stego.Kind.TEXT) {
@@ -208,8 +214,7 @@ public final class Cli {
         WavFile wav = inspection.wav();
 
         out.println(path.getFileName());
-        out.printf(Locale.ROOT, "  Audio     %s, %d-bit, %s, %s%n", hz(wav.sampleRate()), wav.bitsPerSample(),
-                channels(wav.channels()), duration(wav.durationSeconds()));
+        out.println("  Audio     " + Describe.audio(wav, ", "));
         if (!inspection.embeddable()) {
             out.println("  Capacity  none: " + wav.unsupportedReason());
             return OK;
@@ -278,24 +283,6 @@ public final class Cli {
 
     private static String usage() {
         return USAGE_TEXT.formatted(FileIO.appVersion(), PASSWORD_ENV);
-    }
-
-    static String hz(int rate) {
-        return rate % 1000 == 0 ? rate / 1000 + " kHz" : String.format(Locale.ROOT, "%.1f kHz", rate / 1000.0);
-    }
-
-    static String channels(int n) {
-        return switch (n) {
-            case 1 -> "mono";
-            case 2 -> "stereo";
-            default -> n + " channels";
-        };
-    }
-
-    static String duration(double seconds) {
-        long s = Math.round(seconds);
-        return s >= 3600 ? String.format(Locale.ROOT, "%d:%02d:%02d", s / 3600, s / 60 % 60, s % 60)
-                : String.format(Locale.ROOT, "%d:%02d", s / 60, s % 60);
     }
 
     private static char[] consolePassword(String label, boolean confirm) throws IOException {
